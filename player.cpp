@@ -10,16 +10,21 @@ Player::Player(Side side) {
     testingMinimax = false;
 
     /* 
-     * TODO: Do any initialization you need to do here (setting up the board,
+     * Do any initialization you need to do here (setting up the board,
      * precalculating things, etc.) However, remember that you will only have
      * 30 seconds.
      */
+
+    s = side;
+    b = new Board();
+    cerr << s << endl;
 }
 
 /*
  * Destructor for the player.
  */
 Player::~Player() {
+    delete b;
 }
 
 /*
@@ -39,5 +44,37 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
      * TODO: Implement how moves your AI should play here. You should first
      * process the opponent's opponents move before calculating your own move
      */ 
-    return NULL;
+
+    // Process opponents move
+    if (s == BLACK) {
+        b->doMove(opponentsMove, WHITE);
+    }
+    else {
+        b->doMove(opponentsMove, BLACK);
+    }
+
+    // // Check if we need to pass
+    // if (b->checkMove(NULL, s)) {
+    //     return NULL;
+    // }
+    // Compute valid moves
+    vector<Move> moves;
+    Move *m = new Move(0,0);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            m->x = i;
+            m->y = j;
+            if (b->checkMove(m, s)) {
+                cerr << m->x << m->y << endl;
+                moves.push_back(Move(i,j));
+            }
+        }
+    }
+    delete m;     
+    // Select move
+    int randomIndex = rand() % moves.size();
+    int x = moves[randomIndex].x;
+    int y = moves[randomIndex].y;
+    Move *res = new Move(x,y);
+    return res;
 }
