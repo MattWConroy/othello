@@ -20,6 +20,7 @@ public:
     bool testingMinimax;
 
     Side s;
+    Side opponent;
     Board* b;
 };
 

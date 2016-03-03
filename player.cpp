@@ -16,8 +16,14 @@ Player::Player(Side side) {
      */
 
     s = side;
+    if (s == BLACK) {
+        opponent = WHITE;
+    }
+    else {
+        opponent = BLACK;
+    }
     b = new Board();
-    cerr << s << endl;
+
 }
 
 /*
@@ -40,23 +46,14 @@ Player::~Player() {
  * return NULL.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
-    /* 
-     * TODO: Implement how moves your AI should play here. You should first
-     * process the opponent's opponents move before calculating your own move
-     */ 
 
     // Process opponents move
-    if (s == BLACK) {
-        b->doMove(opponentsMove, WHITE);
-    }
-    else {
-        b->doMove(opponentsMove, BLACK);
-    }
+    b->doMove(opponentsMove, opponent);
 
-    // // Check if we need to pass
-    // if (b->checkMove(NULL, s)) {
-    //     return NULL;
-    // }
+    // Check if we need to pass
+    if (b->checkMove(NULL, s)) {
+        return NULL;
+    }
     // Compute valid moves
     vector<Move> moves;
     Move *m = new Move(0,0);
@@ -65,16 +62,55 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             m->x = i;
             m->y = j;
             if (b->checkMove(m, s)) {
-                cerr << m->x << m->y << endl;
                 moves.push_back(Move(i,j));
             }
         }
     }
     delete m;     
     // Select move
-    int randomIndex = rand() % moves.size();
-    int x = moves[randomIndex].x;
-    int y = moves[randomIndex].y;
-    Move *res = new Move(x,y);
+    // int randomIndex = rand() % moves.size();
+    // int x = moves[randomIndex].x;
+    // int y = moves[randomIndex].y;
+    Board *testBoard;
+    int heuristic;
+    Move *res = new Move(0,0);
+    int best = -10000;
+    int x, y;
+    for (unsigned int i = 0; i < moves.size(); i++) {
+        testBoard = b->copy();
+        testBoard->doMove(&moves[i], s);
+        heuristic = testBoard->count(s) - testBoard->count(opponent);
+        x = moves[i].x;
+        y = moves[i].y;
+
+        // Adjust for corners
+        if ((x == 0 && y == 0) || (x == 7 && y == 7) 
+            || (x == 7 && y == 0) || (x == 0 && y == 7)) 
+        {    
+            heuristic += 50;
+        }
+        // Adjust for squares next to corners
+        else if ((x == 0 && y == 1) || (x == 1 && y == 0)
+            || (x == 0 && y == 6) || (x == 1 && y == 7)
+            || (x == 6 && y == 0) || (x == 7 && y == 1) 
+            || (x == 6 && y == 7) || (x == 7 && y == 6)
+            || (x == 1 && y == 1) || (x == 6 && y == 6)
+            || (x == 1 && y == 6) || (x == 6 && y == 1)) 
+        {
+            heuristic -= 50;
+        }
+        // Adjust for edges not next to corners
+        else if (x == 0 || y == 0 || x == 7 || y == 7) {
+            heuristic += 10;
+        }
+
+        if (heuristic > best) {
+            res->x = x;
+            res->y = y;
+            best = heuristic;
+        }
+        delete testBoard;
+    }
+    b->doMove(res, s);
     return res;
 }
